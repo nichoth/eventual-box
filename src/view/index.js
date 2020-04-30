@@ -1,6 +1,7 @@
 var { h, Component } = require('preact')
 var EVENTS = require('../EVENTS')
 var Router = require('../routes')
+// var Box = require('3box')
 
 var router = Router()
 
@@ -36,7 +37,35 @@ class App extends Component {
     }
 
     async componentDidMount () {
+        // console.log('win', window.Box)
         await this.getAddressFromMetaMask()
+        const box = await Box.openBox(this.state.accounts[0],
+            window.ethereum)
+        const space = await box.openSpace('foo-bar-space')
+        this.setState({ space, box })
+
+        const rach = "0x2f4cE4f714C68A3fC871d1f543FFC24b9b3c2386"
+        const thread = await space.joinThread('thread-name', {
+            firstModerator: rach,
+            members: false
+        })
+
+        this.setState({ thread }, () => (this.getAppsthread()))
+    }
+
+    async getAppsThread () {
+         if (!this.state.thread) {
+             console.error("apps thread not in react state");
+             return;
+        }
+
+        const posts = await this.state.thread.getPosts();
+        this.setState({posts});
+
+        await this.state.thread.onUpdate(async()=> {
+            const posts = await this.state.thread.getPosts();
+            this.setState({posts});
+        })
     }
 
     render (props, state) {
